@@ -19,7 +19,7 @@ while True:
         serverSocket.bind(('', p))
         if command[1] == 'lsend':
             print(str(clientAddress) + ' is uploading on port ' + str(p))
-            threading.Thread(target=getFile, args=(serverSocket, command[3], clientAddress, command[4], port, p)).start()
+            threading.Thread(target=ServerGet(serverSocket, clientAddress, int(command[4])).getFile, args=(command[3], port, p)).start()
         
         elif command[1] == 'lget':
             print(str(clientAddress) + ' is downloading on port ' + str(p))

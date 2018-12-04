@@ -6,14 +6,13 @@ IP_PORT = ('', 6666)
 commandServerSocket = socket(AF_INET, SOCK_DGRAM)
 commandServerSocket.bind(IP_PORT)
 port = [i for i in range(6667,6677)]
-print('server is listening...')
+print('server is listening on port 6666')
 
 while True:
     command, clientAddress = commandServerSocket.recvfrom(2048)
-    print(command.decode('utf-8'))
+    #print(command.decode('utf-8'))
     command = command.decode('utf8').split()
     if len(port) > 0:
-        print(port)
         serverSocket = socket(AF_INET, SOCK_DGRAM)
         p = port.pop(0)
         serverSocket.bind(('', p))

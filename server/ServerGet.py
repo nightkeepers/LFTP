@@ -10,39 +10,31 @@ class ServerGet(object):
     def __init__(self, serverSocket, clientAddress, packetNum):
         self.window = [0] * WINDOW_SIZE
         self.window2 = [-1] * WINDOW_SIZE
-        self.rcv_base = 0
-        self.seq = 0
+        self.rcv_base = 1
         self.serverSocket = serverSocket
         self.clientAddress = clientAddress
         self.packetNum = packetNum
 
     def getFile(self, fileName, port, p):
         filehandler = open(PATH + fileName, 'wb')
-        cnt = 0
-        head = Header(self.seq, WINDOW_SIZE - cnt + self.rcv_base - int(WINDOW_SIZE / 5)).getHeader()
+        cnt = 1
+        seq = 0
+        head = Header(seq, WINDOW_SIZE - cnt + self.rcv_base - int(WINDOW_SIZE / 5)).getHeader()
         self.serverSocket.sendto(pack('ii', head['seq'], head['rwnd']), self.clientAddress)
-        self.seq += 1
         while True:
             data, _ = self.serverSocket.recvfrom(2048)
-            self.seq = unpack('i', data[0:4])[0]
-            cnt = max(cnt, self.seq)
+            seq = unpack('i', data[0:4])[0]
+            cnt = max(cnt, seq)
 
             #return ack
-            head = Header(self.seq, WINDOW_SIZE - cnt + self.rcv_base - int(WINDOW_SIZE / 5)).getHeader()
+            head = Header(seq, WINDOW_SIZE - cnt + self.rcv_base - int(WINDOW_SIZE / 5)).getHeader()
             ack = pack('ii', head['seq'], head['rwnd'])
             self.serverSocket.sendto(ack, self.clientAddress)
-            if self.seq == 0:
-                packetNum = int(data[8:].decode("utf-8"))
-                if packetNum == 0:
-                    print("file doesn't exists")
-                    break
-                self.rcv_base += 1
-                print(packetNum)
-                continue
-            if self.seq >= self.rcv_base:
+
+            if seq >= self.rcv_base:
                 filedata = data[8:]
-                self.window[self.seq % WINDOW_SIZE] = filedata
-                self.window2[self.seq % WINDOW_SIZE] = self.seq
+                self.window[seq % WINDOW_SIZE] = filedata
+                self.window2[seq % WINDOW_SIZE] = seq
 
             #check window and read            
             while True:
@@ -52,10 +44,11 @@ class ServerGet(object):
                 else:
                     break
 
-            if self.rcv_base >= packetNum + 1 and packetNum > 0:
+            if self.rcv_base >= self.packetNum + 1 and self.packetNum > 0:
                 break
 
         # close the file
         filehandler.close()
         port.append(p)
         self.serverSocket.close()
+        print(self.clientAddress, ' upload end!')
